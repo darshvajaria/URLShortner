@@ -26,7 +26,6 @@ public class urlController {
 	
 	@RequestMapping(value="/post",method=RequestMethod.POST)
 	public url longToShorturl(@RequestBody url URL) throws NoSuchAlgorithmException, MalformedURLException {
-		if(urlService.check(URL.getLurl()) != null)return urlService.check(URL.getLurl());
 	    return urlService.longToShorturl(URL);   /*SHA-256 hash of longURL is 
 	                                               generated and url entity is 
 	                                               saved in db.*/

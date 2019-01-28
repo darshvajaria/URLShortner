@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -31,9 +32,8 @@ public class urlService {
 	private analyticsDao analyticsDao;
 	@Autowired 
 	private reportDao reportDao;
-	
-	//@Autowired
-	//private ApplicationContext appContext;
+	@Autowired
+	private ApplicationContext appContext;
 	
 	Timestamp t = new Timestamp(System.currentTimeMillis());
 	
@@ -82,10 +82,9 @@ public class urlService {
 		
 		updatePOSTs();                                     //increments POST requests.
 		
-		//urlService tempService = appContext.getBean(urlService.class); //to enable caching
-		//cachables c = new cachables();
-		//url u = c.check(lurl);                               //returns shortURL if longURL already in db.
-		//if(u!=null)return u;
+		urlService tempService = appContext.getBean(urlService.class); //to enable caching
+		url u = tempService.check(lurl);
+		if(u!=null)return u;
 		
 		/*Initially first 8 characters of hashtext is considered. Checked if already used.
 		 * If used and not expired(a shortURL expires after a year. The expiration time can be manipulated by user) 
