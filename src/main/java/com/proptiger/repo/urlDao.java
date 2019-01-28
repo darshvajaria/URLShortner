@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import com.proptiger.model.url;
 
 public interface urlDao extends JpaRepository<url, String>{
-	@Query(value = "SELECT * FROM url.url WHERE url.url.longURL=?1",nativeQuery=true)
-	public url getUserByLongURL(String lurl);
+	@Query(value = "SELECT * FROM url.url WHERE url.longURL=?1 AND url.domainName=?2",nativeQuery=true)
+	public url getUserByLongURLandDname(String lurl, String domainName);
 }

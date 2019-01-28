@@ -24,9 +24,12 @@ public class analytics {
 	@JsonIgnore
 	private String hash;
 	
+	@Column(name="domainName")
+	private String domainName;
+	
 	@Column(name="clicks")
 	private Long clicks;
-
+    
 	public String getLongURL() {
 		return longURL;
 	}
@@ -57,6 +60,14 @@ public class analytics {
 
 	public void setHash(String hash) {
 		this.hash = hash;
+	}
+
+	public String getDomainName() {
+		return domainName;
+	}
+
+	public void setDomainName(String domainName) {
+		this.domainName = domainName;
 	}
 	
 }

@@ -54,9 +54,9 @@ public class urlService {
 	}
 	
 	@Cacheable(value="cacheCheck",unless="#result==null")
-	public url check(String lurl) {         /*Query is executed to check if a tuple exists for the 
-		                                      given longURL.*/ 
-		url u = urlDao.getUserByLongURL(lurl);
+	public url check(String lurl, String domainName) {   /*Query is executed to check if a tuple exists for the 
+		                                                   given longURL.*/ 
+		url u = urlDao.getUserByLongURLandDname(lurl,domainName);
 		if(u != null) {
 		   u.setsecPassed(t.getTime());
 		   urlDao.save(u);
@@ -78,12 +78,10 @@ public class urlService {
                                                             makkan.com is considered.*/
         else domainName = url.getDname(); 
 		
-		
-		
 		updatePOSTs();                                     //increments POST requests.
 		
 		urlService tempService = appContext.getBean(urlService.class); //to enable caching
-		url u = tempService.check(lurl);
+		url u = tempService.check(lurl,domainName);
 		if(u!=null)return u;
 		
 		/*Initially first 8 characters of hashtext is considered. Checked if already used.
@@ -145,7 +143,7 @@ public class urlService {
 			  temp.setLurl("short url is expired. Generate shortURL for longURL again.");
 			  return temp;
 		   }
-		   updateAnalytics(temp.getLurl()); //as the url is valid update analytics.
+		   updateAnalytics(temp.getLurl(), temp.getDname()); //as the url is valid update analytics.
 		   return temp;
 		}
 		temp = new url();
@@ -153,11 +151,11 @@ public class urlService {
 		return temp;
 	}
 	
-	private void updateAnalytics(String longURL) throws NoSuchAlgorithmException {
+	private void updateAnalytics(String longURL, String domainName) throws NoSuchAlgorithmException {
 		//hash is generated to cut down the time complexity of search. 
 		String hashtext = generateDesiredHash(longURL,"MD5");
 		   
-	    analytics a = analyticsDao.findHash(hashtext);
+	    analytics a = analyticsDao.findHashandDname(hashtext,domainName);
 	    if(a != null) {   
 		   a.setClicks(a.getClicks()+1); 
 	    }
@@ -165,17 +163,38 @@ public class urlService {
 		    a = new analytics();
 		    a.setLongURL(longURL);
 		    a.setHash(hashtext);
-		    a.setClicks((long)1); 
+		    a.setClicks((long)1);
+		    a.setDomainName(domainName);
 	    }
 	    analyticsDao.save(a);
 	}
 	
-	public analytics getAnalysis(String shortURL) throws NoSuchAlgorithmException {
+	public analytics getAnalysis(String shortURL) throws NoSuchAlgorithmException, MalformedURLException {
+		
+		int l = shortURL.length(), i, count = 0;
+		String domainName = "";
+		boolean flag = false;
+		
+		for(i=0;i<l;i++) {
+			if(shortURL.charAt(i) == '/')count++;
+			if(count == 3)flag = false;
+			if((count>2 && count<3) || flag)domainName+=shortURL.charAt(i);
+			if(count == 2)flag = true;
+		}
+
 		url u = urlDao.findOne(shortURL);
 		if(u != null){
-		   String s = u.getLurl();	
-		   String hashtext = generateDesiredHash(s,"MD5");
-		   return analyticsDao.findHash(hashtext);
+		   String longURL = u.getLurl();	
+		   String hashtext = generateDesiredHash(longURL,"MD5");
+		   analytics a = analyticsDao.findHashandDname(hashtext,domainName);
+		   if(a == null) {
+			  a = new analytics();
+			  a.setClicks((long) 0);
+			  a.setLongURL(longURL);
+			  a.setDomainName(domainName);
+			  return a;
+		   }
+		   
 		}
 		analytics a = new analytics();
 		a.setLongURL("url doesn't exist");

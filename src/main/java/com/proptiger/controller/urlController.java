@@ -37,7 +37,7 @@ public class urlController {
 	}
 	
 	@RequestMapping(value="/analytics",method = RequestMethod.GET)
-	public analytics getAnalytics(@RequestParam("surl") String shortURL) throws NoSuchAlgorithmException{
+	public analytics getAnalytics(@RequestParam("surl") String shortURL) throws NoSuchAlgorithmException, MalformedURLException{
 		return urlService.getAnalysis(shortURL); /*output is clicks for every registered longURL.
 		                                           Manipulation such as most clicked, least clicked
 		                                           can be done by simple MySQL queries.*/
