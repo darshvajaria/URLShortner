@@ -101,7 +101,6 @@ public class urlService {
 		for(i=0;i<=l-bucket;i++) {   
 		    probableSURL = surl+hashtext.substring(i,i+bucket); 
 		    urlFlag = urlDao.exists(probableSURL);
-		    System.out.println("darsh");
 		    if(urlFlag) {
 		       url U = urlDao.findOne(probableSURL);
 		       if(isExpire(U)) {              
