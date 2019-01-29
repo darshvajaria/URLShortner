@@ -11,7 +11,8 @@ clicks and total requests/API calls were also undertaken.
 #Goals
 1. Shorten url with minimal or no repetitions.
 2. Exploit reusability of short url, i.e. try using a short url for multiple long urls.
-3. Analysis: Number of clicks for given short url, number of times services used.
+3. URLs with same File should have same shortened file and a different domain.
+4. Analysis: Number of clicks for given short url, number of times services used everyday.
 
 #Technical Specifications
 1. Language: JAVA
@@ -22,7 +23,7 @@ clicks and total requests/API calls were also undertaken.
 6. Uniqueness algorithm: Bucketed SHA-256
 7. Server: Tomcat
 
-#Why SHA-256 ?
+#Why SHA-256?
 1) Output of SHA-256 is 32 bytes, 64 characters (hexadecimal). Considering 8
 characters, gives 36^8 = 3 trillion possibilities. Moreover the algorithm designed
 covers much more than these possibilities because of reusability and increased
