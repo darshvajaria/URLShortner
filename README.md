@@ -1,4 +1,4 @@
-# URLShortner
+# URLShortener
 
 #Overview
 Url shortener service is used to share shortened url via SMS(saves valuable characters
