@@ -38,7 +38,7 @@ public class urlService {
 	Timestamp t = new Timestamp(System.currentTimeMillis());
 	
 	@Async
-	private void updatePOSTs() {                   /*Registers number of POST requests in a day.
+	public void updatePOSTs() {                   /*Registers number of POST requests in a day.
 	                                                LocalDate.now() is converted into mySQL Date format
 	                                                and then query is executed to increment requests.*/  
 		LocalDate ld = java.time.LocalDate.now();
@@ -47,7 +47,7 @@ public class urlService {
 	}
 	
 	@Async
-	private void updateGETs() {
+	public void updateGETs() {
 		LocalDate ld = java.time.LocalDate.now();
 		Date date = Date.valueOf(ld);
  		reportDao.updateGETs(date);
@@ -78,7 +78,8 @@ public class urlService {
                                                             makkan.com is considered.*/
         else domainName = url.getDname(); 
 		
-		updatePOSTs();                                     //increments POST requests.
+		urlService tempUrlService = appContext.getBean(urlService.class);
+		tempUrlService.updatePOSTs();                      //increments POST requests.                                   
 		
 		urlService tempService = appContext.getBean(urlService.class); //to enable caching
 		url u = tempService.check(lurl,domainName);
@@ -90,7 +91,7 @@ public class urlService {
 		 * we get a 8 character hashtext. Re-usability is achieved. 
 		 * */
 		String hashtext = generateDesiredHash(query,"SHA-256");
-		int i, l = hashtext.length(),bucket = 8;  /*if all the 54 combinations of 8 bits are considered then go for 9 bits. 
+		int i, l = hashtext.length(),bucket = 8;  /*if all the 54 combinations of 8 bits are considered, then go for 9 bits. 
 		                                            Number of bits currently considered is bucket.*/
 		String surl = "https://"+domainName+"/", probableSURL;
 		url temp = new url();
@@ -131,13 +132,14 @@ public class urlService {
 	}
 	
 	public url shortToLongurl(String shortURL) throws MalformedURLException, NoSuchAlgorithmException {
-		updateGETs(); //increments GET requests.
-		
 		/*Given shortURL is first searched in urlDao. 
 		 * If the url is valid then, expiry is checked.
 		 * */
-		url temp = urlDao.findOne(shortURL); 
+		urlService tempUrlService = appContext.getBean(urlService.class);
+		tempUrlService.updateGETs();
 		
+		System.out.println("vajaria");
+		url temp = urlDao.findOne(shortURL); 
 		if(temp != null){
 		   if(isExpire(temp)) {
 			  temp.setLurl("short url is expired. Generate shortURL for longURL again.");

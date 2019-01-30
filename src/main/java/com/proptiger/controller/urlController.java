@@ -33,6 +33,7 @@ public class urlController {
 	
 	@RequestMapping(value="/get",method=RequestMethod.GET)
 	public url shortToLongurl(@RequestParam("surl") String shortURL) throws MalformedURLException, NoSuchAlgorithmException{
+		//urlService.updateGETs(); //increments GET requests.
 		return urlService.shortToLongurl(shortURL);
 	}
 	
