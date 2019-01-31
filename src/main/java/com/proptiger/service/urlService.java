@@ -9,6 +9,8 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -56,7 +58,7 @@ public class urlService {
 	@Cacheable(value="cacheCheck",unless="#result==null")
 	public url check(String lurl, String domainName) {   /*Query is executed to check if a tuple exists for the 
 		                                                   given longURL.*/ 
-		url u = urlDao.getUserByLongURLandDname(lurl,domainName);
+		url u = urlDao.findBylurlAnddname(lurl,domainName);
 		if(u != null) {
 		   u.setsecPassed(t.getTime());
 		   urlDao.save(u);
@@ -69,7 +71,7 @@ public class urlService {
 		return u.getFile();                 //eg: /user/login/db1?authenticate=right
 	}
 	
-	public url longToShorturl(url url) throws NoSuchAlgorithmException, MalformedURLException {
+	public url longToShorturl(url url) throws NoSuchAlgorithmException, MalformedURLException, InterruptedException {
 		String lurl = url.getLurl(); 
 		String query = qString(lurl);                      //returns File of longURL.
 		String domainName;
@@ -95,50 +97,52 @@ public class urlService {
 		                                            Number of bits currently considered is bucket.*/
 		String surl = "https://"+domainName+"/", probableSURL;
 		url temp = new url();
-		boolean urlFlag = false;
 		
+		Lock encryptLock = new ReentrantLock();
 		for(i=0;i<=l-bucket;i++) {   
-		    probableSURL = surl+hashtext.substring(i,i+bucket); 
-		    urlFlag = urlDao.exists(probableSURL);
-		    if(urlFlag) {
-		       url U = urlDao.findOne(probableSURL);
-		       if(isExpire(U)) {              
-		    	  U.setsecPassed(t.getTime()); 
-		    	  U.setSurl(probableSURL);
-		    	  U.setLurl(lurl); 
-		    	  U.setDname(domainName);
-		    	  temp = U;
-		    	  urlDao.save(U);
-		    	  break;
-		       }
-		       if(i == l-bucket) {
-		    	  bucket++; 
-		    	  i = -1;
-		       }
-		       continue;
-		    }
-		    else {
-		        url U = new url();
-		        U.setLurl(lurl);
-		        U.setSurl(probableSURL);
-		        U.setsecPassed(t.getTime());
-		        U.setDname(domainName);
-		        temp = U;
-		        urlDao.save(U);
-		        break;
-		    }
+		    probableSURL = surl+hashtext.substring(i,i+bucket);
+		    encryptLock.lock();                   //concurrency control
+		    url U = urlDao.findOne(probableSURL);
+			if(U != null) {
+			   if(isExpire(U)) {              
+				  U.setsecPassed(t.getTime()); 
+				  U.setSurl(probableSURL);
+				  U.setLurl(lurl); 
+				  U.setDname(domainName);
+				  temp = U;
+				  urlDao.save(U);
+				  encryptLock.unlock();
+				  break;
+			   }
+			   if(i == l-bucket){
+				  bucket++; 
+				  i = -1;
+			   }
+			   encryptLock.unlock();
+			   continue;
+			}
+			else {
+			    U = new url();
+			    U.setLurl(lurl);
+			    U.setSurl(probableSURL);
+			    U.setsecPassed(t.getTime());
+			    U.setDname(domainName);
+			    temp = U;
+			    urlDao.save(U);
+			    encryptLock.unlock();
+			    break;
+			}
 		}
 		return temp;
 	}
 	
 	public url shortToLongurl(String shortURL) throws MalformedURLException, NoSuchAlgorithmException {
 		/*Given shortURL is first searched in urlDao. 
-		 * If the url is valid then, expiry is checked.
+		 *If the url is valid then, expiry is checked.
 		 * */
 		urlService tempUrlService = appContext.getBean(urlService.class);
 		tempUrlService.updateGETs();
 		
-		System.out.println("vajaria");
 		url temp = urlDao.findOne(shortURL); 
 		if(temp != null){
 		   if(isExpire(temp)) {
@@ -157,7 +161,7 @@ public class urlService {
 		//hash is generated to cut down the time complexity of search. 
 		String hashtext = generateDesiredHash(longURL,"MD5");
 		   
-	    analytics a = analyticsDao.findHashandDname(hashtext,domainName);
+	    analytics a = analyticsDao.findByhashAndomainName(hashtext,domainName);
 	    if(a != null) {   
 		   a.setClicks(a.getClicks()+1); 
 	    }
@@ -188,7 +192,7 @@ public class urlService {
 		if(u != null){
 		   String longURL = u.getLurl();	
 		   String hashtext = generateDesiredHash(longURL,"MD5");
-		   analytics a = analyticsDao.findHashandDname(hashtext,domainName);
+		   analytics a = analyticsDao.findByhashAndomainName(hashtext,domainName);
 		   if(a == null) {
 			  a = new analytics();
 			  a.setClicks((long) 0);

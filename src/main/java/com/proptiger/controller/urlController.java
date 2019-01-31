@@ -24,14 +24,14 @@ public class urlController {
 	@Autowired
 	private urlService urlService;
 	
-	@RequestMapping(value="/post",method=RequestMethod.POST)
-	public url longToShorturl(@RequestBody url URL) throws NoSuchAlgorithmException, MalformedURLException {
+	@RequestMapping(value="/createShortURL",method=RequestMethod.POST)
+	public url longToShorturl(@RequestBody url URL) throws NoSuchAlgorithmException, MalformedURLException, InterruptedException {
 	    return urlService.longToShorturl(URL);   /*SHA-256 hash of longURL is 
 	                                               generated and url entity is 
 	                                               saved in db.*/
 	}
 	
-	@RequestMapping(value="/get",method=RequestMethod.GET)
+	@RequestMapping(value="/getLongURL",method=RequestMethod.GET)
 	public url shortToLongurl(@RequestParam("surl") String shortURL) throws MalformedURLException, NoSuchAlgorithmException{
 		//urlService.updateGETs(); //increments GET requests.
 		return urlService.shortToLongurl(shortURL);
